@@ -5,5 +5,5 @@ namespace REBoP.Services;
 public interface IPdfSource
 {
     [MustDisposeResource]
-    FileStream OpenRead();
+    Stream OpenRead();
 }

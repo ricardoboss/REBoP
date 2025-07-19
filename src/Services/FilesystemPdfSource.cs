@@ -2,7 +2,7 @@
 
 public class FilesystemPdfSource(FileInfo File) : IPdfSource
 {
-    public FileStream OpenRead()
+    public Stream OpenRead()
     {
         if (!File.Exists)
             throw new FileNotFoundException("Cannot open file for reading", File.FullName);
