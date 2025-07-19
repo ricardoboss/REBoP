@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "REBoP", "src\REBoP.csproj", "{DFB038D4-9C3F-42DD-81A3-188619899DBA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "REBoP.Test", "test\REBoP.Test.csproj", "{94EF1DC5-F5C4-43BC-A4B5-022CE36587CE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DFB038D4-9C3F-42DD-81A3-188619899DBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFB038D4-9C3F-42DD-81A3-188619899DBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFB038D4-9C3F-42DD-81A3-188619899DBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFB038D4-9C3F-42DD-81A3-188619899DBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94EF1DC5-F5C4-43BC-A4B5-022CE36587CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94EF1DC5-F5C4-43BC-A4B5-022CE36587CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94EF1DC5-F5C4-43BC-A4B5-022CE36587CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94EF1DC5-F5C4-43BC-A4B5-022CE36587CE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
