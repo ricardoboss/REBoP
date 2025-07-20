@@ -1,4 +1,4 @@
-﻿# Unreleased
+﻿# 1.0.1
 
 * Added GitHub Actions workflows (build & publish)
 * Widened return type for `IPdfSource.OpenRead` from `FileStream` to `Stream` to allow more generic implementations

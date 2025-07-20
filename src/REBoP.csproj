@@ -33,7 +33,7 @@
   <!-- NuGet package properties -->
   <PropertyGroup>
     <PackageId>REBoP</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>1.0.1</PackageVersion>
     <Authors>Ricardo Boss</Authors>
     <Copyright>Copyright © 2025 Ricardo Boss</Copyright>
     <PackageTags>REWE;PDF;receipt</PackageTags>
