@@ -1,6 +1,6 @@
 ﻿# Rewe E-Bon Processor (REBoP)
 
-Read your Rewe e-bon PDFs using C#!
+Read your REWE e-bon PDFs using C#!
 
 ## Features
 
