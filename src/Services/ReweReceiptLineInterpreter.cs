@@ -39,7 +39,7 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
     private static IEnumerable<ReceiptItem> ReadItems(IReceiptContent content, Receipt receipt)
     {
         var items = string.Join('\n', content.FindLines(
-            (line, _) => line.EndsWith("EUR"),
+            (line, _) => line.EndsWith("EUR", StringComparison.Ordinal),
             (line, _) => line.Length > 3 && line.Skip(1).All(c => c == '-')
         ).Skip(1));
 
@@ -104,10 +104,10 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         string timeStr;
         string receiptNoStr;
         string? traceNoStr;
-        if (content.Lines.Any(l => l.StartsWith("Datum: ")))
+        if (content.Lines.Any(l => l.StartsWith("Datum: ", StringComparison.Ordinal)))
         {
             // newer receipt layout
-            var (dateLineIdx, dateLine) = content.Lines.Index().First(t => t.Item.StartsWith("Datum: "));
+            var (dateLineIdx, dateLine) = content.Lines.Index().First(t => t.Item.StartsWith("Datum: ", StringComparison.Ordinal));
             var timeLine = content.Lines[dateLineIdx + 1];
             var receiptNumberLine = content.Lines[dateLineIdx + 2];
             var traceNumberLine = content.Lines[dateLineIdx + 3];
@@ -121,7 +121,7 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         else
         {
             // older receipt layout
-            var dateTimeReceiptLine = content.Lines.First(l => l.Contains("Bon-Nr.:"));
+            var dateTimeReceiptLine = content.Lines.First(l => l.Contains("Bon-Nr.:", StringComparison.Ordinal));
 
             var components = dateTimeReceiptLine.Split(' ').Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
             dateStr = components[0];
@@ -134,8 +134,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         var time = TimeOnly.Parse(timeStr, GermanCulture);
         var timestamp = ToGermanDateTimeOffset(date, time);
 
-        var receiptNo = int.Parse(receiptNoStr);
-        int? traceNo = string.IsNullOrWhiteSpace(traceNoStr) ? null : int.Parse(traceNoStr);
+        var receiptNo = int.Parse(receiptNoStr, GermanCulture);
+        int? traceNo = string.IsNullOrWhiteSpace(traceNoStr) ? null : int.Parse(traceNoStr, GermanCulture);
 
         return (timestamp, receiptNo, traceNo);
     }
@@ -155,7 +155,7 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
 
     private static decimal ReadTotal(IReceiptContent content)
     {
-        var sumLine = content.FindLine((line, _) => line.TrimStart().StartsWith("SUMME "))?.TrimStart();
+        var sumLine = content.FindLine((line, _) => line.TrimStart().StartsWith("SUMME ", StringComparison.Ordinal))?.TrimStart();
         if (sumLine is null)
             throw new ReceiptInterpreterException("Did not find the total sum line");
 
@@ -168,8 +168,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         ReadTaxDetails(IReceiptContent content)
     {
         var tableLines = content.FindLines(
-                (line, _) => line.TrimStart().StartsWith("Steuer"),
-                (line, _) => line.TrimStart().StartsWith("Gesamtbetrag")
+                (line, _) => line.TrimStart().StartsWith("Steuer", StringComparison.Ordinal),
+                (line, _) => line.TrimStart().StartsWith("Gesamtbetrag", StringComparison.Ordinal)
             )
             .Skip(1) // Skip header line
             ;
@@ -183,7 +183,7 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            if (line.Contains("Konzessionär:"))
+            if (line.Contains("Konzessionär:", StringComparison.Ordinal))
             {
                 partnerCode = line.TrimEnd()[(line.TrimEnd().LastIndexOf(' ') + 1)..];
 
@@ -302,7 +302,7 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
 
         var marketAddressLines = content.FindLines(
             (line, _) => !string.IsNullOrWhiteSpace(line),
-            (line, _) => line.Trim().EndsWith("EUR")
+            (line, _) => line.Trim().EndsWith("EUR", StringComparison.Ordinal)
         );
 
         var builder = new MarketBuilder();
@@ -311,25 +311,29 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         foreach (var line in marketAddressLines)
         {
             var trimmed = line.Trim();
-            if (trimmed.StartsWith("UID Nr.: "))
+            if (trimmed.StartsWith("UID Nr.: ", StringComparison.Ordinal))
             {
                 var vatId = trimmed["UID Nr.: ".Length..];
 
                 builder.VatId = vatId;
+
+                // VAT-ID is the line _after_ the address
+                break;
             }
-            else
-            {
-                addressBuilder.AppendLine(trimmed);
-            }
+
+            addressBuilder.AppendLine(trimmed);
         }
 
         builder.Address = addressBuilder.ToString().TrimEnd();
 
-        var marketNumberLine = content.FindLine((line, _) => line.TrimStart().StartsWith("Markt:")).TrimStart();
-        var firstSpaceChar = marketNumberLine.IndexOf(' ');
-        var marketNumber = marketNumberLine["Markt:".Length..firstSpaceChar];
+        var marketNumberLine = content.FindLine((line, _) => line.TrimStart().StartsWith("Markt:", StringComparison.Ordinal))?.TrimStart();
+        if (marketNumberLine is not null)
+        {
+            var firstSpaceChar = marketNumberLine.IndexOf(' ', StringComparison.Ordinal);
+            var marketNumber = marketNumberLine["Markt:".Length..firstSpaceChar];
 
-        builder.MarketNumber = marketNumber;
+            builder.MarketNumber = marketNumber;
+        }
 
         return builder.Build();
     }

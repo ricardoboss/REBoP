@@ -1,4 +1,9 @@
-﻿# 1.0.1
+﻿# 1.0.2
+
+* Fixed some warnings related to parsing
+* Fixed an issue where the whole receipt was treated as the market address
+
+# 1.0.1
 
 * Added GitHub Actions workflows (build & publish)
 * Widened return type for `IPdfSource.OpenRead` from `FileStream` to `Stream` to allow more generic implementations

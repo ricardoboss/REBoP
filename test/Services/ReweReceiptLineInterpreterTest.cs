@@ -101,7 +101,8 @@ public static class ReweReceiptLineInterpreterTest
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(receipt.Market.Address, Does.StartWith("R E W E"));
+            Assert.That(receipt.Market.Address.Split(Environment.NewLine),
+                Is.EquivalentTo(["R E W E", "Kulenkampffallee 184", "28213 Bremen", "Telefon: 0421 / 2010554"]));
             Assert.That(receipt.TaxTotal.Net, Is.EqualTo(13.18m));
             Assert.That(receipt.Total, Is.EqualTo(14.31m));
             Assert.That(receipt.Timestamp,
