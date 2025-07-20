@@ -2,6 +2,7 @@
 
 * Added GitHub Actions workflows (build & publish)
 * Widened return type for `IPdfSource.OpenRead` from `FileStream` to `Stream` to allow more generic implementations
+* Include `PartnerCode` in debugger display for `TaxDetailItem` and `TaxTotalItem`
 
 # 1.0.0
 

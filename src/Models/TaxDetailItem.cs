@@ -5,7 +5,7 @@ namespace REBoP.Models;
 /// <summary>
 /// A single line of tax details on a <see cref="Receipt"/>.
 /// </summary>
-[DebuggerDisplay("Bracket: {BracketAlias}, Net: {Net}, Tax: {Tax}, Gross: {Gross}")]
+[DebuggerDisplay("Bracket: {BracketAlias}, Net: {Net}, Tax: {Tax}, Gross: {Gross}, PartnerCode: {PartnerCode}")]
 public class TaxDetailItem : TaxTotalItem
 {
     /// <summary>
