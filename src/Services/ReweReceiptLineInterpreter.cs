@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,6 +16,7 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         {
             Market = ReadMarket(content),
             Total = ReadTotal(content),
+            Payment = [..ReadPayment(content)],
         };
 
         var (taxTotal, taxDetailItems, partnerTaxTotals) = ReadTaxDetails(content);
@@ -35,6 +35,39 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
 
         return Task.FromResult(receipt);
     }
+
+    private static IEnumerable<PaymentItem> ReadPayment(IReceiptContent content)
+    {
+        var maybeStartLineIdx = content.FindLineIdx((line, _) => line.Length > 3 && line.Skip(1).All(c => c == '='));
+        if (maybeStartLineIdx is not { } startLineIdx)
+            throw new ReceiptInterpreterException("Could not find payment summary line");
+
+        var items = content.Lines.Skip(startLineIdx + 1).TakeWhile(l => !string.IsNullOrWhiteSpace(l));
+        foreach (var item in items)
+        {
+            var match = PaymentItemLineRegex.Match(item);
+            if (!match.Success)
+            {
+                // Line did probably not contain "EUR", which means it's some kind of subtotal
+                // Only have one example, so not sure this is always correct
+                continue;
+            }
+
+            var label = match.Groups["label"].Value;
+            var totalStr = match.Groups["total"].Value;
+            var total = ParseGermanDecimal(totalStr);
+
+            yield return new()
+            {
+                Id = Guid.NewGuid(),
+                Label = label,
+                Total = total,
+            };
+        }
+    }
+
+    [GeneratedRegex(@"^\s*(?<label>.+?)\s+EUR\s+(?<total>-?\d+,\d+)\s*$")]
+    private static partial Regex PaymentItemLineRegex { get; }
 
     private static IEnumerable<ReceiptItem> ReadItems(IReceiptContent content, Receipt receipt)
     {
@@ -107,7 +140,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         if (content.Lines.Any(l => l.StartsWith("Datum: ", StringComparison.Ordinal)))
         {
             // newer receipt layout
-            var (dateLineIdx, dateLine) = content.Lines.Index().First(t => t.Item.StartsWith("Datum: ", StringComparison.Ordinal));
+            var (dateLineIdx, dateLine) =
+                content.Lines.Index().First(t => t.Item.StartsWith("Datum: ", StringComparison.Ordinal));
             var timeLine = content.Lines[dateLineIdx + 1];
             var receiptNumberLine = content.Lines[dateLineIdx + 2];
             var traceNumberLine = content.Lines[dateLineIdx + 3];
@@ -155,7 +189,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
 
     private static decimal ReadTotal(IReceiptContent content)
     {
-        var sumLine = content.FindLine((line, _) => line.TrimStart().StartsWith("SUMME ", StringComparison.Ordinal))?.TrimStart();
+        var sumLine = content.FindLine((line, _) => line.TrimStart().StartsWith("SUMME ", StringComparison.Ordinal))
+            ?.TrimStart();
         if (sumLine is null)
             throw new ReceiptInterpreterException("Did not find the total sum line");
 
@@ -168,10 +203,10 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         ReadTaxDetails(IReceiptContent content)
     {
         var tableLines = content.FindLines(
-                (line, _) => line.TrimStart().StartsWith("Steuer", StringComparison.Ordinal),
-                (line, _) => line.TrimStart().StartsWith("Gesamtbetrag", StringComparison.Ordinal)
-            )
-            .Skip(1) // Skip header line
+                    (line, _) => line.TrimStart().StartsWith("Steuer", StringComparison.Ordinal),
+                    (line, _) => line.TrimStart().StartsWith("Gesamtbetrag", StringComparison.Ordinal)
+                )
+                .Skip(1) // Skip header line
             ;
 
         List<TaxDetailItem> details = [];
@@ -239,8 +274,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
         // Coupon 19,0%
         // Coupon  7,0%
         var match = TaxBracketAliasRegex.Match(label);
-
-        Debug.Assert(match.Success, "Tax detail label did not match expected format: " + label);
+        if (!match.Success)
+            throw new ReceiptInterpreterException("Tax detail label did not match expected format: " + label);
 
         var alias = match.Groups["alias"].Value;
         var valueStr = match.Groups["value"].Value;
@@ -269,8 +304,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
     private static (string label, decimal net, decimal tax, decimal gross) ReadTaxDetailLine(string taxTotalLine)
     {
         var match = TaxDetailRegex.Match(taxTotalLine.Trim());
-
-        Debug.Assert(match.Success, "Tax detail line did not match expected form: " + taxTotalLine);
+        if (!match.Success)
+            throw new ReceiptInterpreterException("Tax detail line did not match expected form: " + taxTotalLine);
 
         var label = match.Groups["label"].Value;
         var netStr = match.Groups["net"].Value;
@@ -326,7 +361,8 @@ public partial class ReweReceiptLineInterpreter : IReceiptLineInterpreter
 
         builder.Address = addressBuilder.ToString().TrimEnd();
 
-        var marketNumberLine = content.FindLine((line, _) => line.TrimStart().StartsWith("Markt:", StringComparison.Ordinal))?.TrimStart();
+        var marketNumberLine = content
+            .FindLine((line, _) => line.TrimStart().StartsWith("Markt:", StringComparison.Ordinal))?.TrimStart();
         if (marketNumberLine is not null)
         {
             var firstSpaceChar = marketNumberLine.IndexOf(' ', StringComparison.Ordinal);

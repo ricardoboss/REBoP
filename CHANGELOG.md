@@ -1,4 +1,8 @@
-﻿# 1.0.2
+﻿# Unreleased
+
+* Added support for reading payment items
+
+# 1.0.2
 
 * Fixed some warnings related to parsing
 * Fixed an issue where the whole receipt was treated as the market address

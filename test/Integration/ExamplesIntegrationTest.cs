@@ -32,6 +32,18 @@ public static class ExamplesIntegrationTest
             Assert.That(itemTotal, Is.EqualTo(receipt.Total),
                 $"Sum of items ({itemTotal:C}) doesn't match receipt total ({receipt.Total:C})");
 
+            var paidTotal = receipt.Payment.Sum(i =>
+            {
+                var total = i.Total;
+
+                if (!i.IsPaying)
+                    total *= -1;
+
+                return total;
+            });
+            Assert.That(paidTotal, Is.EqualTo(receipt.Total),
+                $"Sum of payment items ({paidTotal:C}) doesn't match receipt total ({receipt.Total:C})");
+
             var lineNumbers = receipt.Items.Select(i => i.LineNumber).ToList();
             Assert.That(lineNumbers, Is.EquivalentTo(lineNumbers.Distinct()), "Line numbers are not unique");
 

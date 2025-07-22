@@ -109,6 +109,7 @@ public static class ReweReceiptLineInterpreterTest
                 Is.EqualTo(new DateTimeOffset(2025, 7, 18, 21, 42, 34, TimeSpan.FromHours(2))));
             Assert.That(receipt.TaxDetails, Has.Count.EqualTo(2));
             Assert.That(receipt.Items, Has.Count.EqualTo(8));
+            Assert.That(receipt.Payment, Has.Count.EqualTo(1));
         }
 
         using (Assert.EnterMultipleScope())
@@ -141,6 +142,10 @@ public static class ReweReceiptLineInterpreterTest
             Assert.That(lastItem.TaxBracket.Alias, Is.EqualTo("A"));
             Assert.That(lastItem.IsNonDiscountable, Is.True);
             Assert.That(lastItem.PartnerCode, Is.Null);
+
+            var paymentItem = receipt.Payment.Single();
+            Assert.That(paymentItem.Label, Is.EqualTo("Geg. Mastercard"));
+            Assert.That(paymentItem.Total, Is.EqualTo(14.31m));
         }
     }
 }
